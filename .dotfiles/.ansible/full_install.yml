@@ -22,6 +22,7 @@
         update_cache: yes
       vars:
         packages:
+	  - firefox
           - chromium-browser
           - gtk-chtheme
           - lxrandr
@@ -34,6 +35,8 @@
           - zsh
           - bluetooth
           - nitrogen
+	  - steam
+	  - syncthing
 
     - name: Trust Etcher GPG
       become: true
@@ -115,6 +118,26 @@
             name:
             - wps-office
             - bluemail
+	    - slack
+B
+B
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+
         - snap:
             classic: yes
             name:
