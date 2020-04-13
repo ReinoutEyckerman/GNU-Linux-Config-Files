@@ -1,111 +1,114 @@
 version: "3"
 
 services:
-  letsencrypt:
-    image: linuxserver/letsencrypt
-    container_name: letsencrypt
-    cap_add:
-      - NET_ADMIN
-    depends_on:
-      - deluge
-      - syncthing
-      - airsonic
-      - freshrss
-      - netdata
-      - plik
-      - organizr
-      - portainer
-      - headphones
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Brussels
-      - URL=confusedhobo.ddns.net
-      - VALIDATION=http
+  traefik:
+    image: traefik
+    container_name: traefik
+    restart: unless-stopped
     volumes:
-      - /drive/LetsEncrypt/Config:/config
+      #- /drive/Traefik/acme.json:/acme.json
+      - /drive/DockerConfigs/Traefik/Config:/config
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 80:80
       - 443:443
-    restart: unless-stopped
+    command: 
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+        #- "--entrypoints.web-secure.address=:443"
+      - "--providers.docker.defaultRule=Host(`{{ print (index ( regexSplit \"-docker\" .Name -1 ) 0) \".Ditto.lan\" }}`)"
+      - "--providers.file.directory=/config"
+      - "--log.filePath=/config/logs/traefik.log"
+      - "--log.level=DEBUG"
+        #- "--certificatesResolvers.le.acme.email=reinald@memeware.net"
+        #- "--certificatesResolvers.le.acme.storage=acme.json"
+        #- "--certificatesResolvers.le.acme.httpChallenge.entryPoint=web"
+        #      - "--certificatesResolvers.le.acme.tlsChallenge=true"
+        #      - "--certificatesResolvers.le.acme.httpChallenge=true"
+    labels:
+      #      - "traefik.http.routers.traefik.tls=true"
+        #      - "traefik.http.routers.traefik.tls.certresolver=le"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
 
-  nginx:
-    image: linuxserver/nginx
-    container_name: nginx 
-    cap_add:
-      - NET_ADMIN
-    depends_on:
-      - deluge
-      - syncthing
-      - airsonic
-      - freshrss
-      - netdata
-      - plik
-      - organizr
-      - portainer
-      - headphones
-      - firefly-db
-      - firefly
+  jackett:
+    container_name: jackett
+    image: linuxserver/jackett
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Nginx/Config:/config
+      - /drive/DockerConfigs/Jackett/Config:/config
+      - /drive/Torrents:/downloads
     ports:
-      - 80:80
+      - 9117:9117
+
+  plex:
+    container_name: plex
+    image: linuxserver/plex
     restart: unless-stopped
-#https://github.com/pi-hole/docker-pi-hole
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:latest
-    dns:
-      - 127.0.0.1
-      - 1.1.1.1
-    ports:
-      - 53:53/tcp
-      - 53:53/udp
-      - 67:67/udp
-      - 80:80/tcp
     environment:
-      TZ: "Europe/Brussels"
-      ServerIP: 10.0.1.30
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Brussels
     volumes:
-      - '/drive/Pihole/Config/:/etc/pihole/'
-      - '/drive/Pihole/ConfigDNSMasq/:/etc/dnsmasq.d/'
+      - /drive/TV:/tv
+      - /drive/DockerConfigs/Plex/Config:/config
+      - /drive/Movies:/movies
+    network_mode: host
+    labels:
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+
+  sonarr:
+    container_name: sonarr
+    image: linuxserver/sonarr
     restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Brussels
+    volumes:
+      - /drive/TV:/tv
+      - /drive/DockerConfigs/Sonarr/Config:/config
+      - /drive/Torrents:/downloads
+    ports:
+      - 8989:8989
 
   organizr:
     image: organizrtools/organizr-v2
     container_name: organizr
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Organizr/Config:/config
-    ports:
-      - 8000:80
-    restart: unless-stopped
+      - /drive/DockerConfigs/Organizr/Config:/config
 
   portainer:
     image: portainer/portainer
     container_name: portainer
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Portainer/Config:/data
+      - /drive/DockerConfigs/Portainer/Config:/data
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - 8010:8000
-      - 8011:9000
-    restart: unless-stopped
+      - 8000:8000
+    labels:
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   netdata:
     image: netdata/netdata
     container_name: netdata
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=999
@@ -114,188 +117,192 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports: 
+      - 8020:19999
     cap_add:
       - SYS_PTRACE
     security_opt:
       - apparmor:unconfined
-    ports: 
-      - 8020:19999
-    restart: unless-stopped
 
   openvpn-as:
     image: linuxserver/openvpn-as
     container_name: openvpn-as
-    cap_add:
-      - NET_ADMIN
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - /drive/OpenVPN/Config:/config
+      - /drive/DockerConfigs/OpenVPN/Config:/config
     ports:
       - 8030:943
       - 9443:9443
       - 1194:1194/udp
-    restart: unless-stopped
-
+    cap_add:
+      - NET_ADMIN
 
   headphones:
     image: linuxserver/headphones
     container_name: headphones
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Headphones/Config:/config
-      - /drive/Headphones/Downloads:/downloads
-      - /drive/MusicOrganized:/music
-    ports:
-      - "8100:8181"
-    restart: unless-stopped
+      - /drive/DockerConfigs/Headphones/Config:/config
+      - /drive/Torrents/Headphones:/downloads
+      - /drive/Music:/music
+    #  labels:
+    #  - "traefik.http.routers.headphones.rule=Host(`headphones.ditto.lan`)"
+    #  - "traefik.http.routers.headphones.tls=true"
+    #  - "traefik.http.routers.headphones.tls.certresolver=le"
+
 
   beets:
     image: linuxserver/beets
     container_name: beets
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Beets/Config:/config
-      - /drive/MusicOrganized:/music
-      - /drive/MusicReOrganized:/musicnew
-      - /drive/MusicUnorganized:/downloads
+      - /drive/DockerConfigs/Beets/Config:/config
+      - /drive/Music:/music
+        #      - /drive/MusicReOrganized:/musicnew
+        #      - /drive/MusicUnorganized:/downloads
     ports:
       - 8337:8337
-    restart: unless-stopped
 
   lms:
     container_name: lms
-    #    image: larsks/logitech-media-server
-    image: snoopy86/logitechmediaserver
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /drive/LMS/config:/config
-      - /drive/MusicOrganized:/srv/music
+    image: vesyrak/logitechmediaserver
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /drive/DockerConfigs/LMS/config:/config
+      - /drive/Music:/music
     ports:
-      - 8110:9000
       - 9090:9090
       - 3483:3483
       - 3483:3483/udp
     devices:
       - /dev/snd
-    restart: always
-    #    command: 
-    #  - '1000'
+    labels:
+      - "traefik.http.services.lms.loadbalancer.server.port=9000"
 
   airsonic:
     image: linuxserver/airsonic
     container_name: airsonic
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
       - CONTEXT_PATH=/
     volumes:
-      - /drive/Airsonic/Config:/config
-      - /drive/MusicOrganized:/music
-      - /drive/Airsonic/Playlists:/playlists
-      - /drive/Airsonic/Podcasts:/podcasts
-      - /drive/Airsonic/Media:/media
-    ports:
-      - 8120:4040
-    restart: unless-stopped
-
-
-  firefly: 
-    image: jc5x/firefly-iii
-    container_name: firefly 
-    environment: 
-      - FF_DB_HOST=firefly-db
-      - FF_DB_NAME=firefly
-      - FF_DB_USER=firefly
-      - FF_DB_PASSWORD=firefly
-      - FF_APP_KEY=S0m3R@nd0mStr1ngOf32Ch@rsEx@ctly
-      - FF_APP_ENV=local
-      - FF_DB_CONNECTION=pgsql
-      - TZ=Europe/Brussels
-      - APP_LOG_LEVEL=debug
-      - TRUSTED_PROXIES=**
-    links: 
-      - firefly-db
-    volumes: 
-      - /drive/FireflyIII/Export:/var/www/firefly-iii/storage/export
-      - /drive/FireflyIII/Upload:/var/www/firefly-iii/storage/upload
-      - /drive/FireflyIII/Config/.env:/var/www/firefly-iii/.env
-    ports:
-      - 8200:80
-
-  firefly-db: 
-    container_name: firefly-db
-    environment: 
-      - POSTGRES_PASSWORD=firefly
-      - POSTGRES_USER=firefly
-    image: "postgres:10"
-    volumes: 
-      - /drive/FireflyIII/Data:/var/lib/postgresql/data
+      - /drive/DockerConfigs/Airsonic/Config:/config
+      - /drive/DockerConfigs/Airsonic/Playlists:/playlists
+      - /drive/DockerConfigs/Airsonic/Podcasts:/podcasts
+      - /drive/DockerConfigs/Airsonic/Media:/media
+      - /drive/Music:/music
 
   syncthing:
     image: linuxserver/syncthing
     container_name: syncthing
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Syncthing/Config:/config
-      - /drive/Syncthing/Data:/data
+      - /drive/DockerConfigs/Syncthing/Config:/config
+      - /drive/SyncthingData:/data
     ports:
-      - 8210:8384
       - 22000:22000
       - 21027:21027/udp
-    restart: unless-stopped
-
-  freshrss:
-    image: freshrss/freshrss
-    container_name: freshrss
-    depends_on:
-      - firefly-db
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Brussels
-    volumes:
-      - /drive/FreshRSS/Config:/var/www/
-    ports:
-      - 8220:80
-    restart: unless-stopped
-
-  plik:
-    image: rootgg/plik:latest
-    container_name: plik
-    user: 1000:1000
-    volumes:
-      - /drive/Plik/Data:/home/plik/server/files
-      - /drive/Plik/plikd.cfg:/home/plik/server/plikd.cfg
-    ports:
-      - 8230:8080
-    tty: true
 
   deluge:
     image: linuxserver/deluge
     container_name: deluge
-    network_mode: host
+    restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/Deluge/Config:/config
-      - /drive/Deluge/Downloaded:/downloads
+      - /drive/DockerConfigs/Deluge/Config:/config
+      - /drive/Torrents:/downloads
+    network_mode: host
+    labels:
+      - "traefik.http.routers.deluge.service=deluge-service"
+      - "traefik.http.services.deluge-service.loadBalancer.server.port=8112"
+      - "traefik.http.services.deluge-service.loadBalancer.server.url=http://172.17.0.1/"
+
+  nextcloud:
+    container_name: nextcloud
+    image: nextcloud
     restart: unless-stopped
+    environment:
+      - PUID=1000
+      - GUID=1000
+      - TZ=Europe/Brussels
+      - MYSQL_HOST=nextcloud_db
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=yourdbpass
+      - MYSQL_DATABASE=nextcloud
+    volumes:
+      - /drive/DockerConfigs/NextCloud/Apps:/var/ww/html/custom_apps
+      - /drive/DockerConfigs/NextCloud/Themes:/var/ww/html/themes
+      - /drive/DockerConfigs/NextCloud/Data:/var/ww/html/data
+      - /drive/DockerConfigs/NextCloud/HTML:/var/ww/html
+      - /drive/DockerConfigs/NextCloud/Config:/var/ww/html/config
+
+  nextcloud_db:
+    container_name: nextcloud_db
+    image:  linuxserver/mariadb
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Brussels
+      - MYSQL_ROOT_PASSWORD=yourdbpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=yourdbpass
+    volumes:
+      - /drive/DockerConfigs/NextCloud/DB:/config
+
+  bookstack:
+    container_name: bookstack
+    image: linuxserver/bookstack
+    restart: unless-stopped
+    environment:
+      - PUID=1000 
+      - PGID=1000 
+      - DB_HOST=bookstack_db
+      - DB_USER=bookstack
+      - DB_PASS=yourdbpass
+      - DB_DATABASE=bookstackapp
+    volumes:
+      - /drive/DockerConfigs/BookStack/Config:/config:rw
+
+  bookstack_db:
+    container_name: bookstack_db 
+    image:  linuxserver/mariadb
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Brussels
+      - MYSQL_ROOT_PASSWORD=yourdbpass
+      - MYSQL_DATABASE=bookstackapp
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=yourdbpass
+    volumes:
+      - /drive/DockerConfigs/BookStack/Data:/config
 
