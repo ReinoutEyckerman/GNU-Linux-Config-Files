@@ -124,14 +124,14 @@ services:
     security_opt:
       - apparmor:unconfined
 
-  openvpn-as:
+  openvpn:
     image: linuxserver/openvpn-as
-    container_name: openvpn-as
+    container_name: openvpn
     restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=Europe/Brussels
     volumes:
       - /drive/DockerConfigs/OpenVPN/Config:/config
     ports:
@@ -171,7 +171,7 @@ services:
       - /drive/DockerConfigs/Beets/Config:/config
       - /drive/Music:/music
         #      - /drive/MusicReOrganized:/musicnew
-        #      - /drive/MusicUnorganized:/downloads
+      - /drive/Torrents:/downloads
     ports:
       - 8337:8337
 
@@ -256,11 +256,11 @@ services:
       - MYSQL_PASSWORD=yourdbpass
       - MYSQL_DATABASE=nextcloud
     volumes:
-      - /drive/DockerConfigs/NextCloud/Apps:/var/ww/html/custom_apps
-      - /drive/DockerConfigs/NextCloud/Themes:/var/ww/html/themes
-      - /drive/DockerConfigs/NextCloud/Data:/var/ww/html/data
-      - /drive/DockerConfigs/NextCloud/HTML:/var/ww/html
-      - /drive/DockerConfigs/NextCloud/Config:/var/ww/html/config
+      - /drive/DockerConfigs/NextCloud/Apps:/var/www/html/custom_apps
+      - /drive/DockerConfigs/NextCloud/Themes:/var/www/html/themes
+      - /drive/DockerConfigs/NextCloud/Data:/var/www/html/data
+      - /drive/DockerConfigs/NextCloud/HTML:/var/www/html
+      - /drive/DockerConfigs/NextCloud/Config:/var/www/html/config
 
   nextcloud_db:
     container_name: nextcloud_db
@@ -306,3 +306,13 @@ services:
     volumes:
       - /drive/DockerConfigs/BookStack/Data:/config
 
+  duckdns:
+    container_name: duckdns
+    image: linuxserver/duckdns
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Brussels
+      - SUBDOMAINS=confusedhobo
+      - TOKEN=5c0518e4-29a6-4dec-b0f3-81f501cc76fc
