@@ -32,10 +32,6 @@ zplug "b4b4r07/enhancd", use:init.sh
 # thefuck / escesc sudo
 zplug "laggardkernel/zsh-thefuck", as:plugin
 
-# ZSH history database
-HISTDB_TABULATE_CMD=(sed -e $'s/\x1f/\t/g')
-zplug "larkery/zsh-histdb", use:"{sqlite-history,histdb-interactive}.zsh", hook-load:"histdb-update-outcome"
-
 #Inline highlighting
 zplug "zdharma/fast-syntax-highlighting"
 
@@ -148,25 +144,6 @@ if ! zplug check; then
     if read -q; then
         echo; zplug install
     fi
-fi
-
-if zplug check "larkery/zsh-histdb"; then
-    if [ ! -f "$HOME/.histdb/zsh-history.db" ]; then
-        echo "Import your old zsh history with github.com/drewis/go-histdbimport"
-    fi
-
-    #_zsh_autosuggest_strategy_histdb_top_here() {
-    #    local query="select commands.argv from
-    #history left join commands on history.command_id = commands.rowid
-    #left join places on history.place_id = places.rowid
-    #where places.dir LIKE '$(sql_escape $PWD)%'
-    #and commands.argv LIKE '$(sql_escape $1)%'
-    #group by commands.argv order by count(*) desc limit 1"
-    #    suggestion=$(_histdb_query "$query")
-    #}
-    #ZSH_AUTOSUGGEST_STRATEGY=histdb_top_here
-
-    #bindkey '^r' _histdb-isearch
 fi
 
 if zplug check "junegunn/fzf-bin"; then
