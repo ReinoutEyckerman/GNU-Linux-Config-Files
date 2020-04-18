@@ -5,6 +5,56 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+## Functions
+function set_title(){
+    echo -ne "\033];$(hostname): $(pwd)\007"
+}
+##Variables
+export TERM="xterm-256color"
+export SHELL="/bin/zsh"
+export EDITOR="vim"
+
+# Fix Locale
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+
+# History
+export HISTFILE="$HOME/.zsh_history"
+export HISTSIZE=10000
+export SAVEHIST=$HISTSIZE
+export ZSH_CUSTOM=$ZSH/custom
+
+
+#export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=36;01:cd=33;01:su=31;40;07:sg=36;40;07:tw=32;40;07:ow=33;40;07:'	
+
+# color formatting for man pages
+export LESS_TERMCAP_mb=$'\e[1;31m'     # begin bold
+export LESS_TERMCAP_md=$'\e[1;36m'     # begin blink
+export LESS_TERMCAP_so=$'\e[1;33;44m'  # begin reverse video
+export LESS_TERMCAP_us=$'\e[1;37m'     # begin underline
+export LESS_TERMCAP_me=$'\e[0m'        # reset bold/blink
+export LESS_TERMCAP_se=$'\e[0m'        # reset reverse video
+export LESS_TERMCAP_ue=$'\e[0m'        # reset underline
+export GROFF_NO_SGR=1                  # for konsole and gnome-terminal
+
+export MANPAGER='less -s -M -R +Gg'
+
+export LS_OPTIONS='--color=auto'
+
+# Common aliases
+alias rm="rm -v"
+alias cp="cp -v"
+alias mv="mv -v"
+alias ls="ls $LS_OPTIONS -hFtr"
+alias ll="ls $LS_OPTIONS -lAhFtr"
+alias ccat="pygmentize -O style=monokai -f 256 -g"
+alias dig="dig +nocmd any +multiline +noall +answer"
+
+disable -r time       # disable shell reserved word
+alias time='time -p ' # -p for POSIX output
+
+
+
 # Check if zplug is installed
 if [[ ! -d ~/.zplug ]]; then
     git clone https://github.com/zplug/zplug ~/.zplug
