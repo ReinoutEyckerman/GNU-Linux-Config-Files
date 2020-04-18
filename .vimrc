@@ -1,6 +1,9 @@
 "-----------------------------------------"
 " Source: http://github.com/timss/vimconf "
 "-----------------------------------------"
+"" add yaml stuffs
+au! BufNewFile,BufReadPost *.{yaml,yml} set filetype=yaml foldmethod=indent
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
 let g:syntastic_python_python_exec = '/usr/bin/python2.7'
 set encoding=utf-8
 
