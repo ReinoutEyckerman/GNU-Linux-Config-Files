@@ -151,7 +151,7 @@ services:
       - TZ=Europe/Brussels
     volumes:
       - /drive/DockerConfigs/Headphones/Config:/config
-      - /drive/Torrents/Headphones:/downloads
+      - /drive/Torrents:/downloads
       - /drive/Music:/music
     #  labels:
     #  - "traefik.http.routers.headphones.rule=Host(`headphones.ditto.lan`)"
@@ -186,6 +186,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /drive/DockerConfigs/LMS/config:/config
       - /drive/Music:/music
+      - /drive/Torrents/Headphones/PostProcessed:/music-hp
     ports:
       - 9090:9090
       - 3483:3483
@@ -210,6 +211,7 @@ services:
       - /drive/DockerConfigs/Airsonic/Podcasts:/podcasts
       - /drive/DockerConfigs/Airsonic/Media:/media
       - /drive/Music:/music
+      - /drive/Torrents/Headphones/PostProcessed:/music-hp
 
   syncthing:
     image: linuxserver/syncthing
