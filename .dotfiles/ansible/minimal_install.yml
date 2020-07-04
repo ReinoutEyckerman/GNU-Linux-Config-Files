@@ -27,6 +27,7 @@
         - vim
         - openssh-server
         - bluetooth
+        - ncdu
 
     - name: Enable ZSH
       shell: chsh -s $(which zsh) $SUDO_USER
