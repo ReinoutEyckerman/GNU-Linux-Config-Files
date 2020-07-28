@@ -8,13 +8,13 @@
           autoremove: yes
       vars:
           packages:
-              - libreoffice-base-core
-              - libreoffice-core
-              - libreoffice-common
-              - kmahjongg
-              - kmines
-              - kpatience
-              - ksudoku
+            - libreoffice-base-core
+            - libreoffice-core
+            - libreoffice-common
+            - kmahjongg
+            - kmines
+            - kpatience
+            - ksudoku
     - name: Install full install packages with apt
       become: true
       apt: 
@@ -22,7 +22,7 @@
         update_cache: yes
       vars:
         packages:
-	  - firefox
+          - firefox
           - chromium-browser
           - gtk-chtheme
           - lxrandr
@@ -35,8 +35,10 @@
           - zsh
           - bluetooth
           - nitrogen
-	  - steam
-	  - syncthing
+          - steam
+          - syncthing
+          - kcolorchooser
+          - thunderbird
 
     - name: Trust Etcher GPG
       become: true
@@ -118,27 +120,17 @@
             name:
             - wps-office
             - bluemail
-	    - slack
-B
-B
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
+            - slack
 
         - snap:
             classic: yes
             name:
             - atom
+
+    - name: Install private repo
+      become: no
+      git:
+        repo: https://www.github.com/Vesyrak/dotfiles-private
+        version: master
+        dest: /home/reinout
+        accept_hostkey: yes
