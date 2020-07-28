@@ -125,18 +125,17 @@ services:
       - apparmor:unconfined
 
   openvpn:
-    image: linuxserver/openvpn-as
+    image: giggio/docker-openvpn-arm
     container_name: openvpn
     restart: unless-stopped
+    privileged: true
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Brussels
     volumes:
-      - /drive/DockerConfigs/OpenVPN/Config:/config
+      - /drive/DockerConfigs/OpenVPNARM/Config:/etc/openvpn
     ports:
-      - 8030:943
-      - 9443:9443
       - 1194:1194/udp
     cap_add:
       - NET_ADMIN
