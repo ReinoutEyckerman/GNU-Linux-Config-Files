@@ -241,10 +241,10 @@
           --group General
           --key widgetStyle
           kvantum
-  - name: Link user icon
-    file: 
-      src: /home/{{ ansible_user_id }}/.dotfiles/icons/user_icon.png
-      dest: /home/{{ ansible_user_id }}/.face.icon
-      state: link
+    - name: Link user icon
+      file: 
+        src: /home/{{ ansible_user_id }}/.dotfiles/icons/user_icon.png
+        dest: /home/{{ ansible_user_id }}/.face.icon
+        state: link
 
 
