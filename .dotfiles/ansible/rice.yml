@@ -142,21 +142,6 @@
             update_cache: yes
             install_recommends: yes
 
-    - name: Install Simple Menu
-      block:
-        - name: Download simple menu
-          git:
-              repo: https://github.com/KDE/plasma-simplemenu/
-              dest: /tmp/simple_menu
-        - name: Ensure widget folder exists
-          file:
-              path: /home/{{ ansible_user_id }}/.local/share/plasma/plasmoids/org.kde.plasma.simplemenu
-              state: directory
-        - name: Extract simple menu
-          copy:
-              src: /tmp/simple_menu/package/
-              dest: /home/{{ ansible_user_id }}/.local/share/plasma/plasmoids/org.kde.plasma.simplemenu
-
     - name: Install Event Calendar
       block:
         - name: Download Event Calendar
