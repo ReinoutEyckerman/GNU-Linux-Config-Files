@@ -2,12 +2,20 @@
   tasks:  
     - name: Set locales
       vars:
-          locale: en_BE.UTF-8
+          locale: en_IE.UTF-8
           parameters:
-            - LC_MEASUREMENT
-            - LC_MONETARY
+            - LANG
+            - LC_ALL
+            - LANGUAGE
             - LC_NUMERIC
             - LC_TIME
+            - LC_MONETARY
+            - LC_PAPER
+            - LC_NAME
+            - LC_ADDRESS
+            - LC_TELEPHONE
+            - LC_MEASUREMENT
+            - LC_IDENTIFICATION
       block:
         - shell: >
             kwriteconfig5
@@ -17,10 +25,22 @@
             "{{ locale }}"
           loop: "{{ parameters }}"
         - replace:
-            path: /home/{{ ansible_user_id }}/.config/plasma-locale-settings.sh
+            path: /home/{{ ansible_user_id }}/.config/plasma-localerc
             regexp: 'export {{ item }}=.*'
             replace: 'export {{ item }}={{ locale }}'
           loop: "{{ parameters }}"
+        - replace:
+            path: /etc/default/locale
+            regexp: 'export {{ item }}=.*'
+            replace: 'export {{ item }}={{ locale }}'
+          loop: "{{ parameters }}"
+        - shell: "update-locale {{ item }}={{ locale }}"
+          loop: "{{ parameters }}"
+          become: yes
+        - community.general.locale_gen:
+            name: "{{locale}}"
+            state: present
+          become: yes
 
 
     - name: Disable logout confirmation
@@ -55,6 +75,17 @@
           --key Theme
           None
 
+    - name: Create Wallpaper Folders if they dont exist
+      block:
+        - file:
+            path: /home/{{ ansible_user_id }}/WallPapers/SDDM/
+            state: directory
+            mode: '0755'
+        - file:
+            path: /home/{{ ansible_user_id }}/WallPapers/Desktop/
+            state: directory
+            mode: '0755'
+
     - name: Set SDDM Wallpaper
       become: yes
       block:
@@ -62,62 +93,26 @@
             path: /usr/share/sddm/themes/ubuntu-theme/theme.conf
             regexp: background=.*
             replace: background=/home/{{ ansible_user_id }}/Wallpapers/SDDM/background.png
-        - replace:
-            path: /usr/share/sddm/themes/ubuntu-theme/theme.conf.user
-            regexp: background=.*
-            replace: background=/home/{{ ansible_user_id }}/Wallpapers/SDDM/background.png
 
-    - name: Install Kvantum
-      block:
-        - apt:
-            name: libvulkan1=1.1.101.0-2
-          become: yes
-        - apt:
-            name: "{{ packages }}" 
-            state: latest
-          become: yes
-          vars: 
-            packages:
-            - g++ 
-            - libx11-dev 
-            - libxext-dev 
-            - qtbase5-dev 
-            - libqt5svg5-dev 
-            - libqt5x11extras5-dev 
-            - libkf5windowsystem-dev 
-            - qttools5-dev-tools 
-            - cmake 
-            - checkinstall
-        - git:
-            repo: https://github.com/tsujan/Kvantum
-            dest: /tmp/kvantum
-        - file: 
-            path: /tmp/kvantum/Kvantum/build
-            state: directory
-        - shell: cmake ..
-          args:
-            chdir: /tmp/kvantum/Kvantum/build
-        - make:
-            chdir: /tmp/kvantum/Kvantum/build
-        - make: 
-            chdir: /tmp/kvantum/Kvantum/build
-            target: install
-          become: yes
-
-    - name: Configure Materia
+    - name: Configure Materia and Kvantum
       tags: rice
       block:
         - name: Add Materia repo
           become: yes
           apt_repository: 
             repo: ppa:papirus/papirus
-        - name: Install Materia
+        - name: Install Materia and Kvantum
           become: yes
           apt:
-            name: materia-kde
+            name: "{{ packages }}"
             state: latest
             update_cache: yes
             install_recommends: yes
+          vars:
+            packages:
+              - materia-kde 
+              - qt5-style-kvantum
+              - qt5-style-kvantum-themes
         - name: Link Materia theme
           file:
             src: /usr/share/Kvantum/Materia
@@ -227,6 +222,13 @@
     - name: Set KDE Global Theme
       shell: >
           kwriteconfig5 
+          --file kwinrc
+          --group KDE
+          --key ColorScheme
+          MateriaDark
+    - name: Set KDE Global Theme
+      shell: >
+          kwriteconfig5 
           --file kdeglobals
           --group KDE
           --key ColorScheme
@@ -238,6 +240,8 @@
           --group KDE
           --key LookAndFeelPackage
           com.github.varlesh.materia
+    - name: Set KDE Color Theme
+      shell: lookandfeeltool -a com.github.varlesh.materia
     - name: Set Widget Style to kvantum
       shell: >
           kwriteconfig5 

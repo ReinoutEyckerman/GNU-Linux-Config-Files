@@ -22,7 +22,7 @@
         update_cache: yes
       vars:
         packages:
-          - firefox
+          - build-essential
           - chromium-browser
           - gtk-chtheme
           - lxrandr
@@ -35,10 +35,9 @@
           - zsh
           - bluetooth
           - nitrogen
-          - steam
           - syncthing
           - kcolorchooser
-          - thunderbird
+          - evolution
 
     - name: Trust Etcher GPG
       become: true
@@ -119,18 +118,17 @@
         - snap:
             name:
             - wps-office
-            - bluemail
-            - slack
 
         - snap:
             classic: yes
             name:
             - atom
+            - slack
 
-    - name: Install private repo
-      become: no
-      git:
-        repo: https://www.github.com/Vesyrak/dotfiles-private
-        version: master
-        dest: /home/reinout
-        accept_hostkey: yes
+#    - name: Install private repo
+#      become: no
+#      git:
+#        repo: https://www.github.com/Vesyrak/dotfiles-private
+#        version: master
+#        dest: /home/reinout
+#        accept_hostkey: yes

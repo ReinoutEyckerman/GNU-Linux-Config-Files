@@ -15,8 +15,8 @@ export SHELL="/bin/zsh"
 export EDITOR="vim"
 
 # Fix Locale
-export LANG="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
+export LANG="en_IE.UTF-8"
+export LC_ALL="en_IE.UTF-8"
 
 # History
 export HISTFILE="$HOME/.zsh_history"
@@ -62,7 +62,7 @@ if [[ ! -d ~/.zplug ]]; then
     zplug "zplug/zplug", hook-build:"zplug --self-manage"
 fi
 source ~/.zplug/init.zsh
-zplug romkatv/powerlevel10k, as:theme, depth:1 to ~/.zshrc
+zplug romkatv/powerlevel10k, as:theme, depth:1
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
